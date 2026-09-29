@@ -90,57 +90,25 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
     }
 
     // 4. Construir objeto generico de Google Wallet
-    const genericObject = {
+    // Usamos Date.now() para garantizar un ID 100% único en cada prueba
+const objectId = `3388000000023211563.prueba_${Date.now()}`;
+
+const genericObject = {
   id: objectId,
-  classId: CLASS_ID,
-  state: 'ACTIVE', // <-- OBLIGATORIO
-  logo: {
-    sourceUri: {
-      uri: 'https://storage.googleapis.com/wallet-lab-tools-codelabs.appspot.com/pass_google_logo.jpg'
-    },
-    contentDescription: { // <-- OBLIGATORIO PARA TODA IMAGEN
-      defaultValue: {
-        language: 'es-419',
-        value: 'Logotipo de la credencial'
-      }
-    }
-  },
+  classId: '3388000000023211563.credencial_afiliado', // ID forzado directamente
+  state: 'ACTIVE',
   cardTitle: {
     defaultValue: {
       language: 'es-419',
-      value: 'CREDENCIAL DE AFILIADO'
+      value: 'CREDENCIAL DE PRUEBA'
     }
   },
   header: {
     defaultValue: {
       language: 'es-419',
-      value: nombre_completo
+      value: 'Afiliado Test'
     }
-  },
-  subheader: {
-    defaultValue: {
-      language: 'es-419',
-      value: 'CURP'
-    }
-  },
-  textModulesData: [
-    {
-      id: 'curp_val',
-      header: 'CURP',
-      body: curp
-    },
-    {
-      id: 'seccion_val',
-      header: 'SECCIÓN ELECTORAL',
-      body: seccion_electoral || 'N/A'
-    }
-  ],
-  barcode: {
-    type: 'QR_CODE',
-    value: curp,
-    alternateText: curp // Texto alternativo recomendado para el QR
-  },
-  hexBackgroundColor: '#1e293b'
+  }
 };
 
     if (fotoPerfilUrl) {
