@@ -20,7 +20,7 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 const ISSUER_ID = process.env.ISSUER_ID || '3388000000023211563';
 const CLASS_ID = `${ISSUER_ID}.credencial_afiliado`;
 
-// Parsear cuenta de servicio
+// Parseo seguro de la cuenta de servicio
 let serviceAccount = {};
 if (process.env.GOOGLE_SERVICE_ACCOUNT) {
   try {
@@ -44,7 +44,7 @@ app.post('/api/registrar', upload.fields([
       return res.status(400).json({ error: 'Nombre y CURP son obligatorios' });
     }
 
-    // 1. Subir fotografía de perfil si existe
+    // 1. Subida opcional de imagen de perfil
     let fotoPerfilUrl = '';
     if (req.files && req.files['foto_perfil'] && req.files['foto_perfil'][0]) {
       const file = req.files['foto_perfil'][0];
@@ -59,7 +59,7 @@ app.post('/api/registrar', upload.fields([
       }
     }
 
-    // 2. Subir fotografía de INE si existe
+    // 2. Subida opcional de INE
     let fotoIneUrl = '';
     if (req.files && req.files['foto_ine'] && req.files['foto_ine'][0]) {
       const file = req.files['foto_ine'][0];
@@ -74,10 +74,10 @@ app.post('/api/registrar', upload.fields([
       }
     }
 
-    // Generar ID único para el objeto de Google Wallet
+    // Identificador único
     const objectId = `${ISSUER_ID}.usr_${Date.now()}`;
 
-    // 3. Guardar registro en Supabase
+    // 3. Inserción en base de datos Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
       nombre_completo,
       curp,
@@ -93,22 +93,21 @@ app.post('/api/registrar', upload.fields([
       return res.status(400).json({ error: `Error en BD: ${dbError.message}` });
     }
 
-    // 4. Objeto de Google Wallet simplificado
-// 4. Objeto de Google Wallet con estructura estándar de texto
+    // 4. Objeto de Google Wallet con estructura compatible
     const genericObject = {
       id: objectId,
       classId: CLASS_ID,
       state: 'ACTIVE',
       textModulesData: [
         {
-          id: 'nombre',
+          id: 'nombre_afiliado',
           header: 'Nombre del Afiliado',
-          body: nombre_completo || 'Afiliado Test'
+          body: nombre_completo
         }
       ]
     };
 
-    // 5. Generar firma JWT
+    // 5. Firma del JWT
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
@@ -118,7 +117,7 @@ app.post('/api/registrar', upload.fields([
       }
     };
 
-    const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+    const privateKey = (serviceAccount.private_key || '').replace(/\\n/g, '\n');
     const token = jwt.sign(claims, privateKey, { algorithm: 'RS256' });
     const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 
