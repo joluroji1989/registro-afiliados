@@ -91,15 +91,15 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
     // 4. Construir objeto generico de Google Wallet
     // Usamos Date.now() para garantizar un ID 100% único en cada prueba
-const genericObject = {
-  id: objectId,
-  classId: '3388000000023211563.credencial_afiliado',
-  state: 'ACTIVE',
-  cardTitle: {
-    defaultValue: {
-      language: 'es-419',
-      value: 'CREDENCIAL DE PRUEBA'
-    }
+//const genericObject = {
+  //id: objectId,
+  //classId: '3388000000023211563.credencial_afiliado',
+  //state: 'ACTIVE',
+  //cardTitle: {
+    //defaultValue: {
+      //language: 'es-419',
+      //value: 'CREDENCIAL DE PRUEBA'
+    //}
   },
   header: {
     defaultValue: {
