@@ -152,7 +152,7 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
-      origins: ['www.google.com'],
+      origins: [],
       typ: 'savetowallet',
       payload: {
         genericObjects: [genericObject]
