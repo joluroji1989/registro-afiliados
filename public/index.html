@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Afiliación</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-slate-800">Registro de Afiliado</h1>
+      <p class="text-slate-500 text-sm">Completa tus datos para recibir tu credencial digital</p>
+    </div>
+
+    <form id="registroForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Nombre Completo</label>
+        <input type="text" name="nombre_completo" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none" placeholder="Juan Pérez López">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">CURP</label>
+          <input type="text" name="curp" maxlength="18" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm uppercase focus:ring-2 focus:ring-blue-600 focus:outline-none" placeholder="ABCD123456HDF...">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Teléfono</label>
+          <input type="tel" name="telefono" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none" placeholder="5512345678">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Dirección</label>
+          <input type="text" name="direccion" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none" placeholder="Calle, Número, Colonia">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Sección</label>
+          <input type="text" name="seccion_electoral" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none" placeholder="1234">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Fotografía del Afiliado</label>
+        <input type="file" name="foto_perfil" accept="image/*" class="w-full border border-slate-300 rounded-lg p-2 text-sm text-slate-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Foto de INE (opcional)</label>
+        <input type="file" name="foto_ine" accept="image/*" class="w-full border border-slate-300 rounded-lg p-2 text-sm text-slate-500">
+      </div>
+
+      <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md">
+        Guardar y Generar Credencial
+      </button>
+    </form>
+
+    <div id="resultado" class="hidden mt-6 text-center space-y-4">
+      <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <p class="text-emerald-800 font-bold text-lg">¡Registro Exitoso!</p>
+        <p class="text-emerald-600 text-sm">Tu credencial digital ya está lista.</p>
+      </div>
+      <a id="btnWallet" href="#" target="_blank" class="inline-block">
+        <img src="https://raw.githubusercontent.com/google-wallet/badges-and-assets/main/es-419/generic/add-to-google-wallet-wallet-badge.svg" alt="Agregar a la Billetera de Google" class="h-12 hover:opacity-90 transition">
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registroForm');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const resultado = document.getElementById('resultado');
+    const btnWallet = document.getElementById('btnWallet');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Procesando registro...';
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/registrar', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.walletUrl) {
+          form.classList.add('hidden');
+          resultado.classList.remove('hidden');
+          btnWallet.href = data.walletUrl;
+        } else {
+          alert('Error: ' + (data.error || 'Ocurrió un error inesperado'));
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Guardar y Generar Credencial';
+        }
+      } catch (err) {
+        alert('Error de conexión con el servidor');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Guardar y Generar Credencial';
+      }
+    });
+  </script>
+</body>
+</html>
