@@ -136,16 +136,24 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
     };
 
     if (fotoPerfilUrl) {
-      genericObject.imageModulesData = [
-        {
-          mainImage: {
-            sourceUri: {
-              uri: fotoPerfilUrl
-            }
-          },
-          id: 'foto_afiliado'
+      if (fotoPerfilUrl && fotoPerfilUrl.startsWith('http')) {
+  genericObject.imageModulesData = [
+    {
+      mainImage: {
+        sourceUri: {
+          uri: fotoPerfilUrl
+        },
+        contentDescription: {
+          defaultValue: {
+            language: 'es-419',
+            value: 'Foto del Afiliado'
+          }
         }
-      ];
+      },
+      id: 'foto_afiliado'
+    }
+  ];
+}
     }
 
     // 5. Firmar el JWT con la llave privada de Google Cloud
