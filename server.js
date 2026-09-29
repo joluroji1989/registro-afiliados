@@ -136,7 +136,6 @@ const genericObject = {
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
-      origins: [],
       typ: 'savetowallet',
       payload: {
         genericObjects: [genericObject]
