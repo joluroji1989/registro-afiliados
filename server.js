@@ -72,7 +72,7 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
     // Identificador unico para el objeto en Google Wallet
     //const objectId = `${ISSUER_ID}.${curp.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-
+    const objectId = `3388000000023211563.prueba_${Date.now()}`;
     // 3. Guardar en la base de datos Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
       nombre_completo,
@@ -91,7 +91,6 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
     // 4. Construir objeto generico de Google Wallet
     // Usamos Date.now() para garantizar un ID 100% único en cada prueba
-const objectId = `3388000000023211563.prueba_${Date.now()}`;
 const genericObject = {
   id: objectId,
   classId: '3388000000023211563.credencial_afiliado',
