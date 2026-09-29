@@ -94,10 +94,23 @@ app.post('/api/registrar', upload.fields([
     }
 
     // 4. Objeto de Google Wallet con estructura compatible
+    // 4. Objeto de Google Wallet con cardTitle y header requeridos
     const genericObject = {
       id: objectId,
       classId: CLASS_ID,
       state: 'ACTIVE',
+      cardTitle: {
+        defaultValue: {
+          language: 'es-419',
+          value: 'Credencial de Afiliado'
+        }
+      },
+      header: {
+        defaultValue: {
+          language: 'es-419',
+          value: nombre_completo || 'Afiliado'
+        }
+      },
       textModulesData: [
         {
           id: 'nombre_afiliado',
