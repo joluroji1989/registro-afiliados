@@ -94,22 +94,18 @@ app.post('/api/registrar', upload.fields([
     }
 
     // 4. Objeto de Google Wallet simplificado
+// 4. Objeto de Google Wallet con estructura estándar de texto
     const genericObject = {
       id: objectId,
       classId: CLASS_ID,
       state: 'ACTIVE',
-      cardTitle: {
-        defaultValue: {
-          language: 'es-419',
-          value: 'Credencial Afiliado'
+      textModulesData: [
+        {
+          id: 'nombre',
+          header: 'Nombre del Afiliado',
+          body: nombre_completo || 'Afiliado Test'
         }
-      },
-      header: {
-        defaultValue: {
-          language: 'es-419',
-          value: nombre_completo
-        }
-      }
+      ]
     };
 
     // 5. Generar firma JWT
