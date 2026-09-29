@@ -71,7 +71,7 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
     }
 
     // Identificador unico para el objeto en Google Wallet
-    const objectId = `${ISSUER_ID}.${curp.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+    //const objectId = `${ISSUER_ID}.${curp.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
     // 3. Guardar en la base de datos Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
