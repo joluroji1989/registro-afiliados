@@ -93,9 +93,11 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
     // Usamos Date.now() para garantizar un ID 100% único en cada prueba
 const objectId = `3388000000023211563.prueba_${Date.now()}`;
 
+const objectId = `3388000000023211563.prueba_${Date.now()}`;
+
 const genericObject = {
   id: objectId,
-  classId: '3388000000023211563.credencial_afiliado', // ID forzado directamente
+  classId: '3388000000023211563.credencial_afiliado',
   state: 'ACTIVE',
   cardTitle: {
     defaultValue: {
