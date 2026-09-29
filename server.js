@@ -175,8 +175,12 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       }
     };
 
-    const token = jwt.sign(claims, serviceAccount.private_key, { algorithm: 'RS256' });
-    const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+    // 1. Limpiamos la clave privada para corregir los saltos de línea de Vercel
+const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+// 2. Firmamos el token con la clave ya limpia
+const token = jwt.sign(claims, privateKey, { algorithm: 'RS256' });
+const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 
     return res.json({ success: true, walletUrl: saveUrl });
   } catch (error) {
