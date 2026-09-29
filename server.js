@@ -9,6 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(express.static('public'));
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -70,9 +71,9 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       }
     }
 
-    // Identificador unico para el objeto en Google Wallet
-    //const objectId = `${ISSUER_ID}.${curp.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+    // Identificador único para Google Wallet
     const objectId = `3388000000023211563.prueba_${Date.now()}`;
+
     // 3. Guardar en la base de datos Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
       nombre_completo,
@@ -89,48 +90,26 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       return res.status(400).json({ error: `Error en BD: ${dbError.message}` });
     }
 
-    // 4. Construir objeto generico de Google Wallet
-    // Usamos Date.now() para garantizar un ID 100% único en cada prueba
-//const genericObject = {
-  //id: objectId,
-  //classId: '3388000000023211563.credencial_afiliado',
-  //state: 'ACTIVE',
-  //cardTitle: {
-    //defaultValue: {
-      //language: 'es-419',
-      //value: 'CREDENCIAL DE PRUEBA'
-    //}
-  },
-  header: {
-    defaultValue: {
-      language: 'es-419',
-      value: 'Afiliado Test'
-    }
-  }
-};
-
-    if (fotoPerfilUrl) {
-      if (fotoPerfilUrl && fotoPerfilUrl.startsWith('http')) {
-  genericObject.imageModulesData = [
-    {
-      mainImage: {
-        sourceUri: {
-          uri: fotoPerfilUrl
-        },
-        contentDescription: {
-          defaultValue: {
-            language: 'es-419',
-            value: 'Foto del Afiliado'
-          }
+    // 4. Objeto genérico ultra-básico (sin imágenes para prueba de aislamiento)
+    const genericObject = {
+      id: objectId,
+      classId: CLASS_ID,
+      state: 'ACTIVE',
+      cardTitle: {
+        defaultValue: {
+          language: 'es-419',
+          value: 'Credencial Afiliado'
         }
       },
-      id: 'foto_afiliado'
-    }
-  ];
-}
-    }
+      header: {
+        defaultValue: {
+          language: 'es-419',
+          value: nombre_completo || 'Afiliado Test'
+        }
+      }
+    };
 
-    // 5. Firmar el JWT con la llave privada de Google Cloud
+    // 5. Firmar el JWT
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
@@ -140,14 +119,9 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       }
     };
 
-    // 1. Limpiamos la clave privada para corregir los saltos de línea de Vercel
-const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
-
-// 2. Firmamos el token con la clave ya limpia
-console.log(">>> ALARMA: EL SERVIDOR SÍ ESTÁ USANDO ESTE CÓDIGO <<<");
-console.log("OBJETO A ENVIAR:", JSON.stringify(genericObject, null, 2));
-const token = jwt.sign(claims, privateKey, { algorithm: 'RS256' });
-const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+    const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+    const token = jwt.sign(claims, privateKey, { algorithm: 'RS256' });
+    const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 
     return res.json({ success: true, walletUrl: saveUrl });
   } catch (error) {
