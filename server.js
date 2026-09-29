@@ -102,7 +102,7 @@ app.post('/api/registrar', upload.fields([
       cardTitle: {
         defaultValue: {
           language: 'es-419',
-          value: 'Credencial de Afiliado'
+          value: 'CREDENCIAL DE AFILIADO'
         }
       },
       header: {
@@ -111,13 +111,28 @@ app.post('/api/registrar', upload.fields([
           value: nombre_completo || 'Afiliado'
         }
       },
+      subheader: {
+        defaultValue: {
+          language: 'es-419',
+          value: 'CURP'
+        }
+      },
       textModulesData: [
         {
-          id: 'nombre_afiliado',
-          header: 'Nombre del Afiliado',
-          body: nombre_completo
+          id: 'curp_val',
+          header: 'CURP',
+          body: curp
+        },
+        {
+          id: 'seccion_val',
+          header: 'SECCIÓN ELECTORAL',
+          body: seccion_electoral || 'N/A'
         }
-      ]
+      ],
+      barcode: {
+        type: 'qrCode',
+        value: curp
+      }
     };
 
     // 5. Firma del JWT
