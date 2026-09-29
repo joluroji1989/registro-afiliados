@@ -20,7 +20,7 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 const ISSUER_ID = process.env.ISSUER_ID || '3388000000023211563';
 const CLASS_ID = `${ISSUER_ID}.credencial_afiliado`;
 
-// Credenciales de la cuenta de servicio de Google
+// Parsear cuenta de servicio
 let serviceAccount = {};
 if (process.env.GOOGLE_SERVICE_ACCOUNT) {
   try {
@@ -32,8 +32,11 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Endpoint de registro y generacion de credencial
-app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, { name: 'foto_ine', maxCount: 1 }]), async (req, res) => {
+// Endpoint de registro
+app.post('/api/registrar', upload.fields([
+  { name: 'foto_perfil', maxCount: 1 },
+  { name: 'foto_ine', maxCount: 1 }
+]), async (req, res) => {
   try {
     const { nombre_completo, curp, telefono, direccion, seccion_electoral } = req.body;
 
@@ -41,9 +44,9 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       return res.status(400).json({ error: 'Nombre y CURP son obligatorios' });
     }
 
-    // 1. Subir fotografia de perfil a Supabase Storage
+    // 1. Subir fotografía de perfil si existe
     let fotoPerfilUrl = '';
-    if (req.files && req.files['foto_perfil']) {
+    if (req.files && req.files['foto_perfil'] && req.files['foto_perfil'][0]) {
       const file = req.files['foto_perfil'][0];
       const filePath = `perfiles/${curp}_${Date.now()}${path.extname(file.originalname)}`;
       const { error: uploadError } = await supabase.storage
@@ -52,13 +55,13 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
       if (!uploadError) {
         const { data: publicUrlData } = supabase.storage.from('documentos').getPublicUrl(filePath);
-        fotoPerfilUrl = publicUrlData.publicUrl;
+        fotoPerfilUrl = publicUrlData ? publicUrlData.publicUrl : '';
       }
     }
 
-    // 2. Subir INE si fue proporcionada
+    // 2. Subir fotografía de INE si existe
     let fotoIneUrl = '';
-    if (req.files && req.files['foto_ine']) {
+    if (req.files && req.files['foto_ine'] && req.files['foto_ine'][0]) {
       const file = req.files['foto_ine'][0];
       const filePath = `ine/${curp}_${Date.now()}${path.extname(file.originalname)}`;
       const { error: ineUploadError } = await supabase.storage
@@ -67,14 +70,14 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
       if (!ineUploadError) {
         const { data: ineUrlData } = supabase.storage.from('documentos').getPublicUrl(filePath);
-        fotoIneUrl = ineUrlData.publicUrl;
+        fotoIneUrl = ineUrlData ? ineUrlData.publicUrl : '';
       }
     }
 
-    // Identificador único para Google Wallet
-    const objectId = `3388000000023211563.prueba_${Date.now()}`;
+    // Generar ID único para el objeto de Google Wallet
+    const objectId = `${ISSUER_ID}.usr_${Date.now()}`;
 
-    // 3. Guardar en la base de datos Supabase
+    // 3. Guardar registro en Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
       nombre_completo,
       curp,
@@ -90,7 +93,7 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       return res.status(400).json({ error: `Error en BD: ${dbError.message}` });
     }
 
-    // 4. Objeto genérico ultra-básico (sin imágenes para prueba de aislamiento)
+    // 4. Objeto de Google Wallet simplificado
     const genericObject = {
       id: objectId,
       classId: CLASS_ID,
@@ -104,12 +107,12 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
       header: {
         defaultValue: {
           language: 'es-419',
-          value: nombre_completo || 'Afiliado Test'
+          value: nombre_completo
         }
       }
     };
 
-    // 5. Firmar el JWT
+    // 5. Generar firma JWT
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
@@ -125,12 +128,16 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
     return res.json({ success: true, walletUrl: saveUrl });
   } catch (error) {
-    console.error('Error procesando registro:', error);
+    console.error('Error en /api/registrar:', error);
     return res.status(500).json({ error: error.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor activo en el puerto ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Servidor activo en el puerto ${PORT}`);
+  });
+}
+
+module.exports = app;
