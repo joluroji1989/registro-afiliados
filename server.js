@@ -148,6 +148,8 @@ const genericObject = {
 const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 // 2. Firmamos el token con la clave ya limpia
+console.log(">>> ALARMA: EL SERVIDOR SÍ ESTÁ USANDO ESTE CÓDIGO <<<");
+console.log("OBJETO A ENVIAR:", JSON.stringify(genericObject, null, 2));
 const token = jwt.sign(claims, privateKey, { algorithm: 'RS256' });
 const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 
