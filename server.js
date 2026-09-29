@@ -66,7 +66,7 @@ app.post('/api/registrar', upload.fields([{ name: 'foto_perfil', maxCount: 1 }, 
 
       if (!ineUploadError) {
         const { data: ineUrlData } = supabase.storage.from('documentos').getPublicUrl(filePath);
-        fotoIneUrl = ineUrlData.publicUrl;s
+        fotoIneUrl = ineUrlData.publicUrl;
       }
     }
 
