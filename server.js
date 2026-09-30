@@ -186,4 +186,61 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+const { google } = require('googleapis');
+
+// Endpoint para enviar notificaciones Push a un afiliado
+app.post('/api/notificar', async (req, res) => {
+  try {
+    const { curp, titulo, mensaje } = req.body;
+
+    if (!curp || !titulo || !mensaje) {
+      return res.status(400).json({ error: 'Faltan campos: curp, titulo o mensaje' });
+    }
+
+    // 1. Obtener el google_wallet_object_id del afiliado desde Supabase
+    const { data: afiliado, error: dbError } = await supabase
+      .from('afiliados')
+      .select('google_wallet_object_id')
+      .eq('curp', curp)
+      .single();
+
+    if (dbError || !afiliado || !afiliado.google_wallet_object_id) {
+      return res.status(404).json({ error: 'Afiliado o credencial no encontrada para esa CURP' });
+    }
+
+    // 2. Autenticar cliente con la cuenta de servicio de Google
+    const auth = new google.auth.GoogleAuth({
+      credentials: serviceAccount,
+      scopes: ['https://www.googleapis.com/auth/wallet_object.issuer']
+    });
+
+    const wallet = google.walletobjects({ version: 'v1', auth });
+    const objectId = afiliado.google_wallet_object_id;
+
+    // 3. Ejecutar PATCH agregando un mensaje (dispara la alerta push)
+    const response = await wallet.genericobject.patch({
+      resourceId: objectId,
+      requestBody: {
+        messages: [
+          {
+            header: titulo,
+            body: mensaje,
+            id: `msg_${Date.now()}`
+          }
+        ]
+      }
+    });
+
+    return res.json({ 
+      success: true, 
+      message: 'Notificación push enviada con éxito',
+      objectId 
+    });
+
+  } catch (error) {
+    console.error('Error enviando push:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = app;
