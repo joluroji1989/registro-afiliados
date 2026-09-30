@@ -185,7 +185,6 @@ app.post('/api/registrar', upload.fields([
 });
 
 // Endpoint para enviar notificaciones Push
-// Endpoint para enviar notificaciones Push
 app.post('/api/notificar', async (req, res) => {
   try {
     const { curp, titulo, mensaje } = req.body;
@@ -231,47 +230,6 @@ app.post('/api/notificar', async (req, res) => {
               start: { date: ahora.toISOString() },
               end: { date: expira.toISOString() }
             }
-          }
-        ]
-      }
-    });
-
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Error enviando push:', error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-    // Buscar credencial en Supabase
-    const { data: afiliado, error: dbError } = await supabase
-      .from('afiliados')
-      .select('google_wallet_object_id')
-      .eq('curp', curp)
-      .single();
-
-    if (dbError || !afiliado || !afiliado.google_wallet_object_id) {
-      return res.status(404).json({ error: 'No se encontró la credencial para esa CURP' });
-    }
-
-    // Autenticar con Google Wallet API
-    const auth = new google.auth.GoogleAuth({
-      credentials: serviceAccount,
-      scopes: ['https://www.googleapis.com/auth/wallet_object.issuer']
-    });
-
-    const wallet = google.walletobjects({ version: 'v1', auth });
-
-    // Enviar push mediante actualización del pase forzando alerta al sistema
-    await wallet.genericobject.patch({
-      resourceId: afiliado.google_wallet_object_id,
-      requestBody: {
-        messages: [
-          {
-            header: titulo,
-            body: mensaje,
-            id: `msg_${Date.now()}`,
-            messageType: 'TEXT_AND_NOTIFY'
           }
         ]
       }
