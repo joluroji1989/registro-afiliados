@@ -159,7 +159,7 @@ app.post('/api/registrar', upload.fields([
       ];
     }
 
-    // 5. Firma JWT sin restricciones de origins
+    // 5. Firma JWT
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
@@ -180,16 +180,7 @@ app.post('/api/registrar', upload.fields([
   }
 });
 
-const PORT = process.env.PORT || 3000;
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Servidor activo en el puerto ${PORT}`);
-  });
-}
-
-const { google } = require('googleapis');
-
-// Endpoint para enviar notificaciones Push a un afiliado
+// Endpoint para enviar notificaciones Push
 app.post('/api/notificar', async (req, res) => {
   try {
     const { curp, titulo, mensaje } = req.body;
@@ -198,7 +189,7 @@ app.post('/api/notificar', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos: curp, titulo o mensaje' });
     }
 
-    // 1. Obtener el google_wallet_object_id del afiliado desde Supabase
+    // Buscar credencial en Supabase
     const { data: afiliado, error: dbError } = await supabase
       .from('afiliados')
       .select('google_wallet_object_id')
@@ -206,21 +197,20 @@ app.post('/api/notificar', async (req, res) => {
       .single();
 
     if (dbError || !afiliado || !afiliado.google_wallet_object_id) {
-      return res.status(404).json({ error: 'Afiliado o credencial no encontrada para esa CURP' });
+      return res.status(404).json({ error: 'No se encontró la credencial para esa CURP' });
     }
 
-    // 2. Autenticar cliente con la cuenta de servicio de Google
+    // Autenticar con Google Wallet API
     const auth = new google.auth.GoogleAuth({
       credentials: serviceAccount,
       scopes: ['https://www.googleapis.com/auth/wallet_object.issuer']
     });
 
     const wallet = google.walletobjects({ version: 'v1', auth });
-    const objectId = afiliado.google_wallet_object_id;
 
-    // 3. Ejecutar PATCH agregando un mensaje (dispara la alerta push)
-    const response = await wallet.genericobject.patch({
-      resourceId: objectId,
+    // Enviar push mediante actualización del pase
+    await wallet.genericobject.patch({
+      resourceId: afiliado.google_wallet_object_id,
       requestBody: {
         messages: [
           {
@@ -232,16 +222,18 @@ app.post('/api/notificar', async (req, res) => {
       }
     });
 
-    return res.json({ 
-      success: true, 
-      message: 'Notificación push enviada con éxito',
-      objectId 
-    });
-
+    return res.json({ success: true });
   } catch (error) {
     console.error('Error enviando push:', error);
     return res.status(500).json({ error: error.message });
   }
 });
+
+const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Servidor activo en el puerto ${PORT}`);
+  });
+}
 
 module.exports = app;
