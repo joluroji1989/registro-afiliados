@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar Notificación Push</title>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding: 40px 15px; margin: 0; }
+    .card { background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    h2 { margin-top: 0; font-size: 1.25rem; color: #38bdf8; }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-size: 0.9rem; color: #cbd5e1; }
+    input, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+    button { margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 6px; background: #2563eb; color: white; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #64748b; }
+    #resultado { margin-top: 15px; font-size: 0.9rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>📢 Enviar Aviso a Google Wallet</h2>
+    <form id="formAviso">
+      <label>CURP del Afiliado:</label>
+      <input type="text" id="curp" placeholder="Ingresa la CURP registrada" required>
+
+      <label>Título de la Alerta:</label>
+      <input type="text" id="titulo" placeholder="Ej: Convocatoria a Asamblea" required>
+
+      <label>Mensaje:</label>
+      <textarea id="mensaje" rows="3" placeholder="Ej: Sábado 10:00 AM en la Sede Central..." required></textarea>
+
+      <button type="submit" id="btnEnviar">Enviar Notificación Push</button>
+    </form>
+    <div id="resultado"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('formAviso');
+    const btn = document.getElementById('btnEnviar');
+    const resDiv = document.getElementById('resultado');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      resDiv.textContent = '';
+
+      try {
+        const res = await fetch('/api/notificar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            curp: document.getElementById('curp').value.trim(),
+            titulo: document.getElementById('titulo').value.trim(),
+            mensaje: document.getElementById('mensaje').value.trim()
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          resDiv.style.color = '#4ade80';
+          resDiv.textContent = '¡Notificación enviada con éxito! Revisa tu teléfono.';
+          form.reset();
+        } else {
+          resDiv.style.color = '#f87171';
+          resDiv.textContent = 'Error: ' + (data.error || 'No se pudo enviar');
+        }
+      } catch (err) {
+        resDiv.style.color = '#f87171';
+        resDiv.textContent = 'Error de conexión con el servidor.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Notificación Push';
+      }
+    });
+  </script>
+</body>
+</html>
