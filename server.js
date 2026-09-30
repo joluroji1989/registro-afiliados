@@ -14,7 +14,9 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
+app.get('/notificar', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'notificar.html'));
+});
 // Variables de entorno
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
