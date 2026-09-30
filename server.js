@@ -14,9 +14,11 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
 app.get('/notificar', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'notificar.html'));
 });
+
 // Variables de entorno
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
@@ -210,7 +212,7 @@ app.post('/api/notificar', async (req, res) => {
 
     const wallet = google.walletobjects({ version: 'v1', auth });
 
-    // Enviar push mediante actualización del pase
+    // Enviar push mediante actualización del pase forzando alerta al sistema
     await wallet.genericobject.patch({
       resourceId: afiliado.google_wallet_object_id,
       requestBody: {
@@ -218,7 +220,8 @@ app.post('/api/notificar', async (req, res) => {
           {
             header: titulo,
             body: mensaje,
-            id: `msg_${Date.now()}`
+            id: `msg_${Date.now()}`,
+            messageType: 'TEXT_AND_NOTIFY'
           }
         ]
       }
