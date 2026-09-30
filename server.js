@@ -78,13 +78,13 @@ app.post('/api/registrar', upload.fields([
       return res.status(400).json({ error: 'Ambas fotos de la INE (frente y reverso) son requeridas' });
     }
 
-    // 1. Guardar ambos lados en Supabase Storage
+    // 1. Guardar ambos lados en Supabase Storage para auditoría y administración
     const ineFrenteUrl = await subirArchivoStorage(archivoFrente, 'frente', curp);
     const ineReversoUrl = await subirArchivoStorage(archivoReverso, 'reverso', curp);
 
     const objectId = `${ISSUER_ID}.usr_${Date.now()}`;
 
-    // 2. Guardar en tabla afiliados
+    // 2. Guardar registro en Supabase
     const { error: dbError } = await supabase.from('afiliados').insert([{
       nombre_completo,
       curp,
@@ -102,7 +102,7 @@ app.post('/api/registrar', upload.fields([
       return res.status(400).json({ error: `Error en BD: ${dbError.message}` });
     }
 
-    // 3. Crear Objeto de Google Wallet
+    // 3. Crear pase de Google Wallet limpio (sin módulos de imagen pesados)
     const genericObject = {
       id: objectId,
       classId: CLASS_ID,
@@ -122,7 +122,7 @@ app.post('/api/registrar', upload.fields([
       subheader: {
         defaultValue: {
           language: 'es-419',
-          value: 'CURP'
+          value: 'ESTATUS'
         }
       },
       textModulesData: [
@@ -143,27 +143,7 @@ app.post('/api/registrar', upload.fields([
       }
     };
 
-    // 4. Mostrar foto del frente del INE en la credencial digital
-    if (ineFrenteUrl) {
-      genericObject.imageModulesData = [
-        {
-          mainImage: {
-            sourceUri: {
-              uri: ineFrenteUrl
-            },
-            contentDescription: {
-              defaultValue: {
-                language: 'es-419',
-                value: 'Identificación Oficial'
-              }
-            }
-          },
-          id: 'foto_ine'
-        }
-      ];
-    }
-
-    // 5. Firma JWT
+    // 4. Firma JWT
     const claims = {
       iss: serviceAccount.client_email,
       aud: 'google',
@@ -212,12 +192,11 @@ app.post('/api/notificar', async (req, res) => {
 
     const wallet = google.walletobjects({ version: 'v1', auth });
 
-    // Ajuste de tiempos: iniciar 1 minuto antes para evitar desfases de reloj
     const ahora = new Date();
     const inicioAlerta = new Date(ahora.getTime() - 60 * 1000); 
     const expiraAlerta = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Sobrescribir la lista de mensajes con uno nuevo para reactivar la alerta push
+    // Enviar mensaje push
     await wallet.genericobject.patch({
       resourceId: afiliado.google_wallet_object_id,
       requestBody: {
