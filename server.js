@@ -212,11 +212,12 @@ app.post('/api/notificar', async (req, res) => {
 
     const wallet = google.walletobjects({ version: 'v1', auth });
 
-    // Definir ventana de tiempo activa para forzar la notificación en el sistema
+    // Ajuste de tiempos: iniciar 1 minuto antes para evitar desfases de reloj
     const ahora = new Date();
-    const expira = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 días de vigencia
+    const inicioAlerta = new Date(ahora.getTime() - 60 * 1000); 
+    const expiraAlerta = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Enviar push mediante actualización del pase forzando alerta al sistema
+    // Sobrescribir la lista de mensajes con uno nuevo para reactivar la alerta push
     await wallet.genericobject.patch({
       resourceId: afiliado.google_wallet_object_id,
       requestBody: {
@@ -227,8 +228,8 @@ app.post('/api/notificar', async (req, res) => {
             id: `alerta_${Date.now()}`,
             messageType: 'TEXT_AND_NOTIFY',
             displayInterval: {
-              start: { date: ahora.toISOString() },
-              end: { date: expira.toISOString() }
+              start: { date: inicioAlerta.toISOString() },
+              end: { date: expiraAlerta.toISOString() }
             }
           }
         ]
